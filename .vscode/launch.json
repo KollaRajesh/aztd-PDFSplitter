@@ -1,0 +1,45 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "PDF-Splitter.Console",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build",
+            "program": "${workspaceFolder}/PDF-Splitter.Console/bin/Debug/net8.0/PDF-Splitter.Console.dll",
+            "args": ["C:\\Users\\rkolla\\Capgemini Technology Services India Limited\\All Company - Documents\\PDFExtract"],
+            "cwd": "${workspaceFolder}/PDF-Splitter.Console",
+            "console": "internalConsole",
+            "stopAtEntry": false
+        },
+        {
+            "name": "PDF-Splitter-iText.Console",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build",
+            "program": "${workspaceFolder}/PDF-Splitter-iText.Console/bin/Debug/net8.0/PDF-Splitter-iText.Console.dll",
+            "args": ["C:\\Users\\rkolla\\Downloads\\PDFExtracted\\Source\\2022-tesla-impact-report-highlights.pdf"],
+            "cwd": "${workspaceFolder}/PDF-Splitter-iText.Console",
+            "console": "internalConsole",
+            "stopAtEntry": false
+        },{
+            "name": "PDF-SPlitter.Aspose.Console",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build",
+            "program": "${workspaceFolder}/PDF-SPlitter.Aspose.Console/bin/Debug/net8.0/PDF-SPlitter.Aspose.Console.dll",
+            "args": ["C:\\Users\\rkolla\\Downloads\\PDFExtracted\\Source\\2022-tesla-impact-report-highlights.pdf"],
+            "cwd": "${workspaceFolder}/PDF-SPlitter.Aspose.Console",
+            "console": "internalConsole",
+            "stopAtEntry": false
+        },
+        {
+            "name": ".NET Core Attach",
+            "type": "coreclr",
+            "request": "attach"
+        }
+    ]
+}

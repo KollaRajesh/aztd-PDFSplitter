@@ -1,0 +1,96 @@
+Folder.GetFiles Folder: $'''C:\\Users\\rkolla\\Downloads\\PDFExtracted\\Source''' FileFilter: $'''*.pdf''' IncludeSubfolders: False FailOnAccessDenied: True SortBy1: Folder.SortBy.NoSort SortDescending1: False SortBy2: Folder.SortBy.NoSort SortDescending2: False SortBy3: Folder.SortBy.NoSort SortDescending3: False Files=> Files
+LOOP FOREACH CurrentItem IN Files
+    # The 'Get file path part' action retrieves the path of the selected file. The directory part of the path is used as a destination folder for the new files.
+    File.GetPathPart File: CurrentItem RootPath=> RootPath Directory=> Directory FileName=> FileName FileNameWithoutExtension=> FileNameNoExtension Extension=> FileExtension
+    CALL Get_Count_Of_Pages
+    # The 'PreviousPage' and 'CurrentPage' variables are used to extract the PDF file by the specified set of pages. Both variables are increased in every loop iteration by the user-defined number.
+    SET n TO 1
+    SET PreviousPage TO 0
+    SET CurrentPage TO n
+    # The loop repeats until the 'Extract PDF file pages to new PDF file' action fails. When the action fails, there are no more pages to extract.
+    LOOP WHILE (1) = (1)
+        IF Count > 0 THEN
+            IF (Folder.IfFolderExists.DoesNotExist Path: $'''%Directory.Parent.FullName%/Destination''') THEN
+                Folder.Create FolderPath: Directory.Parent.FullName FolderName: $'''Destination''' Folder=> TargetFolder
+            END
+            IF (Folder.IfFolderExists.DoesNotExist Path: $'''%Directory.Parent.FullName%/Destination/%FileNameNoExtension%''') THEN
+                Folder.Create FolderPath: $'''%Directory.Parent.FullName%/Destination''' FolderName: FileNameNoExtension Folder=> TargetFolder
+            END
+        END
+        # In each loop iteration, a check is added to make sure the var %CurrentPage% do not go out of bounds.
+        IF CurrentPage > Count THEN
+            SET CurrentPage TO Count
+        END
+        # In each loop iteration, the 'Extract PDF file pages to new PDF file' action extracts the user-defined number of pages. If the variable %PreviousPage% is equal to %CurrentPage% only the last page is extracted not a range.
+        IF (PreviousPage + 1) <> CurrentPage THEN
+            Pdf.ExtractPages PDFFile: CurrentItem PageSelection: $'''%PreviousPage + 1%-%CurrentPage%''' ExtractedPDFPath: $'''%Directory.Parent.FullName%/Destination/%FileNameNoExtension%/%FileNameNoExtension%-%CurrentPage%.pdf''' IfFileExists: Pdf.IfFileExists.AddSequentialSuffix ExtractedPDFFile=> ExtractedPDF
+            ON ERROR PageOutOfBoundsError
+                GOTO OutOfBounds
+            ON ERROR InvalidPageSelectionError
+                GOTO OutOfBounds
+            ON ERROR FailedToExtractNewPDFFileError
+                REPEAT ACTION
+            END
+        ELSE
+            Pdf.ExtractPages PDFFile: CurrentItem PageSelection: CurrentPage ExtractedPDFPath: $'''%Directory.Parent.FullName%/Destination/%FileNameNoExtension%/%FileNameNoExtension%-%CurrentPage%.pdf''' IfFileExists: Pdf.IfFileExists.AddSequentialSuffix ExtractedPDFFile=> ExtractedPDF
+            ON ERROR PageOutOfBoundsError
+                GOTO OutOfBounds
+            ON ERROR FailedToExtractNewPDFFileError
+                REPEAT ACTION
+            END
+        END
+        SET PreviousPage TO CurrentPage
+        Variables.IncreaseVariable Value: CurrentPage IncrementValue: n
+    END
+    LABEL OutOfBounds
+    IF (Folder.IfFolderExists.DoesNotExist Path: $'''%Directory.Parent.FullName%/Processed''') THEN
+        Folder.Create FolderPath: Directory.Parent.FullName FolderName: $'''Processed''' Folder=> TargetFolder
+    END
+    File.Move Files: CurrentItem.FullName Destination: $'''%Directory.Parent.FullName%/Processed''' IfFileExists: File.IfExists.DoNothing MovedFiles=> MovedFiles
+END
+IF Files.Count > 0 THEN
+    Display.ShowMessageDialog.ShowMessage Title: $'''Flow ran successfully!''' Message: $'''The output PDF files are located in:
+%Directory.Parent.FullName%/Destination''' Icon: Display.Icon.None Buttons: Display.Buttons.OK DefaultButton: Display.DefaultButton.Button1 IsTopMost: True ButtonPressed=> ButtonPressed2
+END
+# The custom form prompts users to select a PDF file to split and specify the number of pages each new file will have.
+@@statistics_TextBlock: '1'
+@@statistics_Input_File: '1'
+@@statistics_Input_Number: '1'
+@@statistics_Action_Submit: '1'
+DISABLE Display.ShowCustomDialog CardTemplateJson: '''{
+  \"type\": \"AdaptiveCard\",
+  \"version\": \"1.4\",
+  \"id\": \"AdaptiveCard\",
+  \"body\": [
+    {
+      \"type\": \"TextBlock\",
+      \"id\": \"Text block\",
+      \"size\": \"medium\",
+      \"weight\": \"bolder\",
+      \"text\": \"${Text_block_Text}\"
+    },
+    {
+      \"type\": \"Input.File\",
+      \"id\": \"File input\",
+      \"isRequired\": true,
+      \"label\": \"${File_input_Label}\"
+    },
+    {
+      \"type\": \"Input.Number\",
+      \"id\": \"Number input\",
+      \"value\": 1.0,
+      \"isRequired\": true,
+      \"label\": \"${Number_input_Label}\"
+    }
+  ],
+  \"actions\": [
+    {
+      \"type\": \"Action.Submit\",
+      \"id\": \"Split\",
+      \"title\": \"${Split_Title}\"
+    }
+  ]
+}''' CustomFormData=> CustomFormData ButtonPressed=> ButtonPressed @Text_block_Text: $'''Split a PDF file''' @File_input_Label: $'''Select a PDF file to split:''' @Number_input_Label: $'''Specify the number of pages to split by:''' @Split_Title: $'''Split'''
+# The 'If' action checks whether the user pressed the 'Split' button in the custom form. If yes, the main logic of the flow runs.
+DISABLE IF ButtonPressed = $'''Split''' THEN
+DISABLE END

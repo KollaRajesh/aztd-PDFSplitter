@@ -1,0 +1,15 @@
+# This subflow calculates the total number of pages the selected PDF file has.
+# The 'Count' variable increases for each page in the PDF file.
+SET Count TO 0
+# The loop repeats until the 'Extract PDF file pages to new PDF file' action fails. When the action fails, the file doesn't have more pages. The 'Extract PDF file pages to new PDF file' action creates a temporary file for each page and the 'Delete file(s)' deletes it.
+LOOP WHILE ($'''True''') = ($'''True''')
+    Pdf.ExtractPages PDFFile: CurrentItem PageSelection: Count + 1 ExtractedPDFPath: $'''%Directory%\\Temp PDF from a desktop flow''' IfFileExists: Pdf.IfFileExists.AddSequentialSuffix ExtractedPDFFile=> ExtractedPDF
+        ON ERROR PageOutOfBoundsError
+            GOTO EndOfLoop
+        ON ERROR FailedToExtractNewPDFFileError
+
+        END
+    File.Delete Files: ExtractedPDF
+    Variables.IncreaseVariable Value: Count IncrementValue: 1
+END
+LABEL EndOfLoop
